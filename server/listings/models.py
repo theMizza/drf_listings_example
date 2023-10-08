@@ -1,10 +1,10 @@
 from django.contrib.auth.models import User
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
-# from rest_framework.authtoken.admin import User
 
 
 class Categories(MPTTModel):
+    """Category tree model"""
     name = models.CharField(max_length=300, verbose_name="Название")
     parent = TreeForeignKey('self',
                             on_delete=models.CASCADE,
@@ -25,8 +25,8 @@ class Categories(MPTTModel):
         return self.name
 
 
-# Create your models here.
 class Listings(models.Model):
+    """Listings model"""
     title = models.CharField(max_length=200)
     content = models.TextField(blank=True)
     user = models.ForeignKey(User, verbose_name='Пользователь', related_name='users_listings', on_delete=models.CASCADE)

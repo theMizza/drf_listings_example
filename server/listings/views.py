@@ -1,3 +1,4 @@
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
@@ -100,7 +101,7 @@ class CreateListingApiViev(APIView):
 
 class ListingApiView(APIView):
     """Listing get/update/delete view"""
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwner, )
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwner,)
 
     def get(self, request, *args, **kwargs):
         pk = kwargs.get('pk', None)
@@ -117,17 +118,18 @@ class ListingApiView(APIView):
 
         try:
             instance = Listings.objects.get(pk=pk)
-            print(instance)
         except Exception as error:
             return Response({'error': f'PUT method error: {error}'})
 
-        if self.check_object_permissions(request, instance):
-            serializer = ListingsSerializer(data=request.data, context={'request': request}, instance=instance)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({'data': serializer.data})
-        else:
+        try:
+            self.check_object_permissions(request, instance)
+        except PermissionDenied:
             return Response({'error': f'No permissions to PUT'})
+
+        serializer = ListingsSerializer(data=request.data, context={'request': request}, instance=instance)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'data': serializer.data})
 
     def delete(self, request, *args, **kwargs):
         pk = kwargs.get('pk', None)
@@ -139,19 +141,23 @@ class ListingApiView(APIView):
         except Exception as e:
             return Response({'error': f'DELETE method error: {e}'})
 
-        if self.check_object_permissions(request, instance):
-            instance.delete()
-            return Response({'data': f"Listing with pk: {pk} was deleted"})
-        else:
+        try:
+            self.check_object_permissions(request, instance)
+        except PermissionDenied:
             return Response({'error': f'No permissions to DELETE'})
+
+        instance.delete()
+        return Response({'data': f"Listing with pk: {pk} was deleted"})
 
 
 class UsersListingsView(APIView):
-    permission_classes = (IsAuthenticated, )
+    """Get list of users listings"""
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         listings = Listings.objects.filter(user=request.user)
         return Response({'data': ListingsSerializer(listings, many=True).data})
+
 
 """
 There are also a lot generics api classes:

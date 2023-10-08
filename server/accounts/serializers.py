@@ -7,7 +7,7 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор пользователя"""
+    """User model serializer"""
 
     class Meta:
         model = User
@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        """Создает и возвращает нового пользователя"""
+        """Create User and Accounts models objects method"""
         print(validated_data)
         password = validated_data.pop('password', None)
         user = self.Meta.model(**validated_data)
